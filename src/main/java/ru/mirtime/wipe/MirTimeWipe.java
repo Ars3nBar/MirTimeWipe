@@ -7,11 +7,13 @@ import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -30,6 +32,8 @@ import java.util.regex.Pattern;
 public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener {
 
     private File lockFile;
+    private File claimedFile;
+    private YamlConfiguration claimedCfg;
     private final Map<UUID, Integer> unlockSeconds = new HashMap<>();
     private final Map<UUID, BukkitTask> timerTasks = new HashMap<>();
 
@@ -37,6 +41,8 @@ public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener
     public void onLoad() {
         saveDefaultConfig();
         lockFile = new File(getDataFolder(), "wipe.lock");
+        claimedFile = new File(getDataFolder(), "claimed_wipe_kit.yml");
+
         if (lockFile.exists()) {
             Bukkit.getConsoleSender().sendMessage(color("&#0055ff&l⚡ [MirTimeWipe] &eЗапуск вайпа с созданием резервной копии..."));
             List<String> targets = getConfig().getStringList("delete-targets");
@@ -57,6 +63,29 @@ public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener
                     }
                 }
             }
+
+            if (getConfig().getBoolean("clean-gemseconomy", true)) {
+                File gemsFile = new File(rootDir, "plugins/GemsEconomy/data.yml");
+                if (gemsFile.exists()) {
+                    try {
+                        File dest = new File(backupDir, "plugins/GemsEconomy/data.yml");
+                        dest.getParentFile().mkdirs();
+                        Files.copy(gemsFile.toPath(), dest.toPath());
+
+                        YamlConfiguration gemsCfg = YamlConfiguration.loadConfiguration(gemsFile);
+                        gemsCfg.set("accounts", null);
+                        gemsCfg.save(gemsFile);
+                        Bukkit.getConsoleSender().sendMessage(color(" &#00FF66✔ Балансы GemsEconomy обнулены (валюта Iksy сохранена)!"));
+                    } catch (IOException e) {
+                        Bukkit.getConsoleSender().sendMessage(color(" &c✖ Ошибка очистки GemsEconomy/data.yml"));
+                    }
+                }
+            }
+
+            if (claimedFile.exists()) {
+                claimedFile.delete();
+            }
+
             lockFile.delete();
             Bukkit.getConsoleSender().sendMessage(color("&#00FF66&l⚡ [MirTimeWipe] Вайп завершён! Резервная копия: &f" + backupDir.getName()));
         }
@@ -64,11 +93,40 @@ public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener
 
     @Override
     public void onEnable() {
+        claimedFile = new File(getDataFolder(), "claimed_wipe_kit.yml");
+        if (!claimedFile.exists()) {
+            try { claimedFile.createNewFile(); } catch (IOException ignored) {}
+        }
+        claimedCfg = YamlConfiguration.loadConfiguration(claimedFile);
+
         if (getCommand("wipe") != null) getCommand("wipe").setExecutor(this);
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getConsoleSender().sendMessage(color("&#00E5FF  MirTimeWipe v1.0.0 успешно загружен!"));
     }
 
+    @EventHandler
+    public void onFirstJoinAfterWipe(PlayerJoinEvent e) {
+        if (!getConfig().getBoolean("first-join-reward.enabled", true)) return;
+        Player p = e.getPlayer();
+        String key = p.getUniqueId().toString();
+        if (claimedCfg.getBoolean(key, false)) return;
+
+        claimedCfg.set(key, true);
+        try { claimedCfg.save(claimedFile); } catch (IOException ignored) {}
+
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (!p.isOnline()) return;
+            for (String cmd : getConfig().getStringList("first-join-reward.commands")) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", p.getName()));
+            }
+            String prefix = getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» ");
+            String msg = getConfig().getString("first-join-reward.message", "");
+            if (!msg.isEmpty()) {
+                p.sendMessage(color(prefix + msg));
+            }
+            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1.2f);
+        }, 40L);
+    }
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!sender.isOp()) {
@@ -94,11 +152,12 @@ public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener
         )));
 
         inv.setItem(13, item(Material.BOOK, "&#00E5FF&lИНФОРМАЦИЯ О ВАЙПЕ", List.of(
-                "&c✖ &fСбросятся: миры, монеты, иксы, кланы,",
-                "   &fаукцион, приваты и награды за время.",
+                "&c✖ &fСбросятся: миры, монеты, иксы, токены,",
+                "   &fкланы, аукцион, приваты и часы.",
                 "",
                 "&#00FF66✔ &fСохранятся: привилегии (LuckPerms),",
-                "   &fтокены (PlayerPoints) и ключи кейсов."
+                "   &fключи кейсов и валюта Iksy.",
+                "&#00E5FF🎁 &fВсем зашедшим выдастся Кит Бога!"
         )));
 
         inv.setItem(15, item(Material.RED_WOOL, "&c&l[✖ НЕТ, ОТМЕНА]", List.of("&7Закрыть меню и ничего не менять.")));
@@ -148,6 +207,7 @@ public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener
         }.runTaskTimer(this, 20L, 20L);
         timerTasks.put(p.getUniqueId(), task);
     }
+
     private void updateStep2Button(Player p, Inventory inv) {
         int left = unlockSeconds.getOrDefault(p.getUniqueId(), 0);
         if (left > 0) {
@@ -227,8 +287,8 @@ public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener
 
         String kickMsg = color("&#0055ff&l⚡ &#00E5FF&lСЕРВЕР MIR-TIME &#0055ff&l⚡\n\n" +
                 "&e&lНАЧИНАЕТСЯ ГЛОБАЛЬНЫЙ ВАЙП И НОВЫЙ СЕЗОН!\n" +
-                "&fКарта, монеты и кланы обнуляются.\n" +
-                "&#00FF66Ваши привилегии, токены и кейсы сохранены!\n\n" +
+                "&fКарта, монеты, токены и кланы обнуляются.\n" +
+                "&#00FF66Ваши привилегии и ключи кейсов сохранены!\n\n" +
                 "&7Перезаходите на сервер через 1–2 минуты.");
 
         for (Player p : Bukkit.getOnlinePlayers()) {
