@@ -1,11 +1,16 @@
 prefix: "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "
 
+# Очищать только балансы игроков в GemsEconomy, сохраняя валюту Iksy:
+clean-gemseconomy: true
+
+# Папки и файлы для переноса в бэкап при вайпе (включая токены PlayerPoints):
+# Привилегии LuckPerms и баны сохраняются!
 delete-targets:
   - "world"
   - "world_nether"
   - "world_the_end"
   - "plugins/Essentials/userdata"
-  - "plugins/GemsEconomy/data.yml"
+  - "plugins/PlayerPoints/storage.db"
   - "plugins/BAuction/data"
   - "plugins/BAuction/rented_slots.yml"
   - "plugins/ajLeaderboards/cache.mv.db"
