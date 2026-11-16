@@ -105,9 +105,9 @@ public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener
         p.openInventory(inv);
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1.0f);
     }
+
     private void openStep2Gui(Player p) {
         stopTimer(p.getUniqueId());
-        unlockSeconds.put(p.getUniqueId(), 20);
 
         Inventory inv = Bukkit.createInventory(null, 27, color("&c&l⚠ ВАЙП [2/2] &8| &4ТОЧНО-ТОЧНО?!"));
         ItemStack red = item(Material.RED_STAINED_GLASS_PANE, "&c▪", null);
@@ -120,33 +120,34 @@ public class MirTimeWipe extends JavaPlugin implements CommandExecutor, Listener
         )));
 
         inv.setItem(15, item(Material.RED_WOOL, "&c&l[✖ ОТМЕНИТЬ ВСЁ]", List.of("&7Нажмите, чтобы отменить вайп.")));
-        updateStep2Button(p, inv);
+
         p.openInventory(inv);
+        unlockSeconds.put(p.getUniqueId(), 20);
+        updateStep2Button(p, inv);
 
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!p.isOnline() || !ChatColor.stripColor(p.getOpenInventory().getTitle()).contains("ВАЙП [2/2]")) {
+                if (!p.isOnline() || !p.getOpenInventory().getTopInventory().equals(inv)) {
                     stopTimer(p.getUniqueId());
                     return;
                 }
                 int left = unlockSeconds.getOrDefault(p.getUniqueId(), 0) - 1;
                 if (left <= 0) {
                     unlockSeconds.put(p.getUniqueId(), 0);
-                    updateStep2Button(p, p.getOpenInventory().getTopInventory());
+                    updateStep2Button(p, inv);
                     p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
                     cancel();
                     timerTasks.remove(p.getUniqueId());
                 } else {
                     unlockSeconds.put(p.getUniqueId(), left);
-                    updateStep2Button(p, p.getOpenInventory().getTopInventory());
+                    updateStep2Button(p, inv);
                     p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.7f, 1.0f);
                 }
             }
         }.runTaskTimer(this, 20L, 20L);
         timerTasks.put(p.getUniqueId(), task);
     }
-
     private void updateStep2Button(Player p, Inventory inv) {
         int left = unlockSeconds.getOrDefault(p.getUniqueId(), 0);
         if (left > 0) {
