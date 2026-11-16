@@ -1,10 +1,30 @@
 prefix: "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "
 
-# Очищать только балансы игроков в GemsEconomy, сохраняя валюту Iksy:
 clean-gemseconomy: true
 
-# Папки и файлы для переноса в бэкап при вайпе (включая токены PlayerPoints):
-# Привилегии LuckPerms и баны сохраняются!
+first-join-reward:
+  enabled: true
+  message: "&#00FF66&l🎁 БОНУС ВАЙПА! &fВы получили бесплатный &#e6c300&lКит «Бог» &fза вход в новом сезоне!"
+  commands:
+    - 'minecraft:give %player% netherite_helmet[custom_name=''{"text":"Шлем Бога","color":"yellow","bold":true}'',enchantments={levels:{"minecraft:protection":15,"minecraft:unbreaking":10,"minecraft:mending":1}}] 1'
+    - 'minecraft:give %player% netherite_chestplate[custom_name=''{"text":"Нагрудник Бога","color":"yellow","bold":true}'',enchantments={levels:{"minecraft:protection":15,"minecraft:unbreaking":10,"minecraft:mending":1}}] 1'
+    - 'minecraft:give %player% netherite_leggings[custom_name=''{"text":"Поножи Бога","color":"yellow","bold":true}'',enchantments={levels:{"minecraft:protection":15,"minecraft:unbreaking":10,"minecraft:mending":1}}] 1'
+    - 'minecraft:give %player% netherite_boots[custom_name=''{"text":"Ботинки Бога","color":"yellow","bold":true}'',enchantments={levels:{"minecraft:protection":15,"minecraft:unbreaking":10,"minecraft:mending":1}}] 1'
+    - 'minecraft:give %player% netherite_sword[custom_name=''{"text":"Меч Бога","color":"yellow","bold":true}'',enchantments={levels:{"minecraft:sharpness":15,"minecraft:fire_aspect":5,"minecraft:unbreaking":10}}] 1'
+    - 'minecraft:give %player% trident[custom_name=''{"text":"🔥 Трезубец Судного Дня","color":"dark_red","bold":true}'',enchantments={levels:{"minecraft:sharpness":15,"minecraft:impaling":10,"minecraft:loyalty":5}}] 1'
+    - 'minecraft:give %player% crossbow[custom_name=''{"text":"⚡ Орудие Бога","color":"yellow","bold":true}'',enchantments={levels:{"minecraft:multishot":1,"minecraft:quick_charge":5}}] 1'
+    - 'minecraft:give %player% netherite_pickaxe[custom_name=''{"text":"Кирка Бога","color":"yellow","bold":true}'',enchantments={levels:{"minecraft:efficiency":15,"minecraft:silk_touch":1,"minecraft:unbreaking":10}}] 1'
+    - 'minecraft:give %player% totem_of_undying 7'
+    - 'minecraft:give %player% elytra 1'
+    - 'minecraft:give %player% firework_rocket[fireworks={flight_duration:3}] 64'
+    - 'minecraft:give %player% enchanted_golden_apple 16'
+    - 'minecraft:give %player% golden_carrot 32'
+    - 'minecraft:give %player% ender_pearl 16'
+    - 'minecraft:give %player% splash_potion[max_stack_size=64,potion_contents={potion:"minecraft:strong_healing"}] 64'
+    - 'minecraft:give %player% splash_potion[max_stack_size=64,potion_contents={potion:"minecraft:strong_strength"}] 64'
+    - 'minecraft:give %player% splash_potion[max_stack_size=64,potion_contents={potion:"minecraft:strong_swiftness"}] 64'
+    - 'minecraft:give %player% arrow 64'
+
 delete-targets:
   - "world"
   - "world_nether"
