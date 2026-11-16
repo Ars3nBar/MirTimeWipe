@@ -1,0 +1,8 @@
+name: MirTimeWipe
+version: '1.0.0'
+main: ru.mirtime.wipe.MirTimeWipe
+api-version: '1.21'
+load: STARTUP
+commands:
+  wipe:
+    description: Безопасный вайп сервера Mir-Time (только OP)
